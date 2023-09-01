@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  overflow: auto !important;
+}
+.drop:hover .list {
+  display: block;
+}
+
+.label {
+  top: 0;
+  left: 10px;
+  color: gray;
+  padding: 8px 0px;
+  user-select: none;
+  pointer-events: none;
+  transition: transform 0.3s ease;
+}
+
+.inp_field:focus ~ .fly_text {
+  transform: translateY(-12px);
+  font-size: 14px;
+  padding: 0px 3px;
+  background-color: #f6f6f6;
+  font-weight: 600;
+}
+.form {
+  .input_field {
+    &:focus ~ .label,
+    &:not(:placeholder-shown):not(focus) ~ .label {
+      transform: translateY(-12px);
+      font-size: 14px;
+      padding: 0px 3px;
+      background-color: #f6f6f6;
+      font-weight: 600;
+    }
+  }
+}
+
+// .addProductForm {
+//   input,
+//   textarea {
+//     border: 1px solid black;
+//     border-radius: 4px;
+//     width: 100%;
+//     padding: 4px 8px;
+//     margin: 4px 0px;
+//   }
+//   label {
+//     font-size: 16px;
+//     font-weight: 600;
+//   }
+// }
+// .profile_container::before {
+//   width: 30px;
+//   height: 30px;
+//   content: "";
+//   position: absolute;
+//   left: 20px;
+//   top: -14px;
+//   transform: rotate(45deg);
+//   z-index: -10;
+// }
+
+// add product style starts from here
+.addProductForm {
+  input,
+  textarea {
+    font-weight: 500;
+  }
+
+  input:not(input[type="checkbox"]) {
+    width: 100%;
+  }
+
+  textarea {
+    width: 100%;
+    height: 270px;
+    resize: none;
+    padding: 10px 20px;
+  }
+
+  .product-info {
+    width: 100%;
+    height: 500px;
+    display: grid;
+    grid-template-columns: 0.75fr 1.25fr;
+    grid-template-rows: repeat(2, 1fr);
+    grid-gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .product-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    background-size: cover;
+    border-radius: 10px;
+    grid-row: span 2;
+    text-shadow: 0 0 10px #fff;
+  }
+
+  .text {
+    text-transform: capitalize;
+    color: #383838;
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  .product-price {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 20px;
+  }
+
+  .product-price input {
+    margin: 0;
+  }
+
+  .buttons {
+    margin: 20px 0 50px;
+  }
+
+  .btn {
+    padding: 10px 30px;
+    text-transform: capitalize;
+    color: #fff;
+    background: #383838;
+    border-radius: 5px;
+    border: none;
+    outline: none;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+
+  #save-btn {
+    background: #a9a9a9;
+  }
+}
+// add product style  ends here

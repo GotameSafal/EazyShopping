@@ -1,0 +1,29 @@
+
+
+.size_checkbox {
+  -webkit-appearance: none;
+  width: 100px;
+  height: 40px;
+  border-radius: 5px;
+  border: 1px solid #383838;
+  cursor: pointer;
+  margin-bottom: 10px;
+  margin-right: 10px;
+  position: relative;
+  color: #383838;
+  &::after {
+    content: attr(value);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    text-transform: uppercase;
+  }
+  &:checked {
+    background: #383838;
+    color: #fff;
+  }
+}
+
+

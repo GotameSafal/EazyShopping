@@ -1,0 +1,33 @@
+# Ignoring dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Ignoring testing coverage
+/coverage
+
+# Ignoring Next.js build and output directories
+/.next/
+/out/
+
+# Ignoring production build
+/build
+
+# Ignoring miscellaneous files
+.DS_Store
+*.pem
+
+# Ignoring debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignoring local environment files
+.env*.local
+
+# Ignoring Vercel deployment files
+.vercel
+
+# Ignoring TypeScript build information and Next.js environment declaration
+*.tsbuildinfo
+next-env.d.ts
