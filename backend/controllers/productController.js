@@ -53,6 +53,9 @@ export const deleteProduct = catchAsyncError(async (req, res, next) => {
   const _id = req.params.id;
   let product = await Product.findById(_id);
   if (!product) return next(new ErrorHandler("bad request", 400));
+  product.images.map(async (image) => {
+    await cloudinary.v2.uploader.destroy(image.public_id);
+  });
   product = await Product.findByIdAndDelete(_id);
   res.status(200).json({
     success: true,
@@ -64,6 +67,9 @@ export const deleteProduct = catchAsyncError(async (req, res, next) => {
 // to update products
 export const updateProduct = catchAsyncError(async (req, res, next) => {
   const _id = req.params.id;
+  console.log(_id)
+  console.log(req)
+  console.log(req.body)
   let product = await Product.findById(_id);
   if (!product) return next(new ErrorHandler("bad request", 400));
   const files = req.files;
@@ -82,7 +88,12 @@ export const updateProduct = catchAsyncError(async (req, res, next) => {
   }
   product = await Product.findByIdAndUpdate(
     _id,
-    { ...req.body, images: [...product.images], images },
+    {
+      ...req.body,
+      images: [...product.images, ...images],
+      sizes: JSON.parse(req.body.sizes),
+      colors: JSON.parse(req.body.colors),
+    },
     {
       new: true,
     }

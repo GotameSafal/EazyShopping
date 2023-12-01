@@ -1,29 +1,24 @@
 "use client";
-import { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 import { categories } from "@utils/categories";
 import styles from "@styles/adminProduct.module.scss";
 import { useRouter } from "next/navigation";
+import {
+  useGetProductByIdQuery,
+  useUpdateProductMutation,
+} from "@redux/slices/api";
+import { useState, useEffect } from "react";
 function UpdateProduct({ params }) {
-  const [product, setProduct] = useState(null);
   const router = useRouter();
+  const { data, isLoading, error } = useGetProductByIdQuery(params.id);
+  const [product, setProduct] = useState(null);
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/${params.id}`
-        );
-        const data = response.data?.product;
-        setProduct({ ...data, product_name: data.name });
-      } catch (error) {
-        console.error("Error fetching product:", error);
-      }
-    };
-
-    fetchProduct();
-  }, [params.id]);
-
+    if (!isLoading && !error) {
+      // Set the product state only when data is available and there are no errors
+      setProduct(data?.product);
+    }
+  }, [data, isLoading, error]);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProduct((prevState) => ({ ...prevState, [name]: value }));
@@ -73,29 +68,40 @@ function UpdateProduct({ params }) {
     formData.append("description", product.description);
     formData.append("price", product.price);
     formData.append("discount", product.discount);
-    formData.append("sizes", product?.sizes);
+    formData.append("sizes", JSON.stringify(product?.sizes));
     formData.append("category", product?.category);
-    formData.append("colors", product.colors);
+    formData.append("colors", JSON.stringify(product.colors));
     formData.append("stock", product?.stock);
     formData.append("brand", product?.brand);
+
     product.image &&
       product?.image.map((file) => {
         formData.append("file", file);
       });
-    try {
-      const { data } = await axios.put(
-        `http://localhost:8000/product/${params.id}`,
-        formData,
-        { withCredentials: true }
-      );
-      if (data?.success) {
-        toast.success(data?.message);
+    console.log(`id ${product._id}, formdata ${formData}`);
+    updateProduct({ id: product._id, formData })
+      .unwrap()
+      .then((response) => {
+        toast.success(response?.message);
         router.push("/admin/products");
-      } else toast.error(data?.message);
-    } catch (err) {
-      toast.error(err?.response?.data?.message);
-    }
+      })
+      .catch((error) => console.error(error));
   };
+  if (isLoading)
+    return (
+      <div className="w-full h-screen justify-center items-center">
+        Loading...
+      </div>
+    );
+  else if (error) {
+    return (
+      <div className="w-full h-screen justify-center items-center">
+        Something went wrong try again later
+      </div>
+    );
+  }
+
+  console.log(product);
   return (
     <div className="container mx-auto py-8 lg:max-h-[calc(100vh-160px)] lg:overflow-auto  sm:overflow-auto">
       <h1 className="text-3xl mx-w-lg mx-3 font-bold mb-6">Update product</h1>
@@ -200,6 +206,7 @@ function UpdateProduct({ params }) {
                 {index !== 0 && (
                   <button
                     type="button"
+                    disable={i}
                     onClick={() => handleRemoveColor(index)}
                     className="text-red-500 font-semibold"
                   >
@@ -325,7 +332,10 @@ function UpdateProduct({ params }) {
 
           <button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+            disabled={isUpdating}
+            className={`bg-blue-500  hover:bg-blue-600 text-white px-4 py-2 rounded-md ${
+              isUpdating ? "cursor-progress" : "cursor-pointer"
+            }`}
           >
             Update
           </button>

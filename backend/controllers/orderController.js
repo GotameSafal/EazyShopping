@@ -60,8 +60,8 @@ export const getmyOrder = catchAsyncError(async (req, res, next) => {
 
 // get all orders accessible by admin only
 export const getAllOrders = catchAsyncError(async (req, res, next) => {
-  const orderList = await Order.find().populate('user');
-  const total = await Order.countDocuments()
+  const orderList = await Order.find().populate("user").sort({ createdAt: -1 });
+  const total = await Order.countDocuments();
   let totalamount = 0;
   orderList.forEach((elem) => {
     totalamount += elem.totalPrice;
@@ -70,12 +70,13 @@ export const getAllOrders = catchAsyncError(async (req, res, next) => {
     success: true,
     totalamount,
     orderList,
-    total
+    total,
   });
 });
 
 // update order status by admin only
 export const updateOrder = catchAsyncError(async (req, res, next) => {
+  console.log(req.body.orderStatus);
   const order = await Order.findById(req.params.id);
   if (order.orderStatus === "delivered")
     return next(new ErrorHandler("product already delivered"), 400);
@@ -105,9 +106,10 @@ const updateStock = catchAsyncError(async (id, quantity) => {
 // delete order accessible by only admin
 export const deleteOrder = catchAsyncError(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
-  if (order) return next("product not found", 400);
-  await order.remove();
+  if (!order) return next(new ErrorHandler("product not found", 400));
+  await Order.findByIdAndDelete({ _id: req.params.id });
   res.status(200).json({
     success: true,
+    message: "order successfully deleted",
   });
 });

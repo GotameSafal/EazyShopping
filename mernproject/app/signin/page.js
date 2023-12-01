@@ -2,10 +2,11 @@
 import { AiOutlineGooglePlus, BsFacebook } from "@utils/iconExport";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useRegisterMutation } from "@redux/slices/api";
 const SignPage = () => {
   const router = useRouter();
+  const [register, { isLoading }] = useRegisterMutation();
   let [value, setValue] = useState({
     email: "",
     password: "",
@@ -14,19 +15,10 @@ const SignPage = () => {
   });
   const submitHandler = async (e) => {
     e.preventDefault();
-    let { username, email, password, repassword } = value;
     try {
-      let { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/register`,
-        {
-          username,
-          email,
-          password,
-          repassword,
-        }
-      );
-      if (data?.success) {
-        toast.success(data?.message);
+      let response = await register(value);
+      if (response.data) {
+        toast.success(response?.data?.message);
         router.push("/login");
       } else {
         toast.error(data?.message);
@@ -95,7 +87,13 @@ const SignPage = () => {
             />
             <p className="absolute label">Confirm password</p>
           </div>
-          <button className="bg-blue-400 py-2 rounded-md" type="submit">
+          <button
+            disabled={isLoading}
+            className={`bg-blue-400 py-2 rounded-md ${
+              isLoading ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
+            type="submit"
+          >
             Signin
           </button>
         </form>

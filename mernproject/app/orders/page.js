@@ -1,32 +1,29 @@
 "use client";
-import axios from "axios";
-import { useState, useEffect } from "react";
 import { ListofOrderedProduct } from "@components/clients";
-import { toast } from "react-hot-toast";
+import { useGetMyOrdersQuery } from "@redux/slices/api";
+import { useRouter } from "next/navigation";
 const Order = () => {
-  const [orderedProduct, setOrderedProduct] = useState(null);
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const { data } = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/me/order`,
-          { withCredentials: true }
-        );
-        if (data?.success) setOrderedProduct(data?.order);
-      } catch (err) {
-        toast.error('something went wrong try again later')
-      }
-    };
-    fetchOrders();
-  }, []);
+  const { data: orderedProduct, isLoading } = useGetMyOrdersQuery();
+  const router = useRouter();
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen flex justify-center items-center">
+        Loading...
+      </div>
+    );
+  }
+  if (orderedProduct.order.length === 0) {
+    return (
+      <div className="h-screen text-2xl font-bold w-screen flex justify-center items-center">
+        No any product
+        <button className="py-1 px-2 rounded-md border-blue" onClick={() => router.push("/")}>Go back</button>
+      </div>
+    );
+  }
   return (
     <div className="lg:w-[80%] mx-auto">
-      {orderedProduct ? (
-        <ListofOrderedProduct orderData={orderedProduct} />
-      ) : (
-        <div className="my-3 flex justify-center text-center">
-          <p>No any product</p>
-        </div>
+      {orderedProduct && (
+        <ListofOrderedProduct orderData={orderedProduct.order} />
       )}
     </div>
   );

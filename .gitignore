@@ -2,16 +2,17 @@
 /node_modules
 /.pnp
 .pnp.js
-
+/backend/config/*.env
+/backend/config/node_modules
 # Ignoring testing coverage
-/coverage
+*/coverage
 
 # Ignoring Next.js build and output directories
-/.next/
-/out/
+/mernproject/.next/
+/mernproject/out/
 
 # Ignoring production build
-/build
+/frontend/build
 
 # Ignoring miscellaneous files
 .DS_Store

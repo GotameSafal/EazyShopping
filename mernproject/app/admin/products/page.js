@@ -11,65 +11,37 @@ import Image from "next/image";
 import { FiEdit, FaTrashAlt } from "@utils/iconExport";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { ProductBody } from "@components/admin/adminClient";
 import Pagination from "react-js-pagination";
+import {
+  useDeleteProductMutation,
+  useGetProductByPageQuery,
+} from "@redux/slices/api";
 const Page = () => {
   const [show, setshow] = useState(false);
-  const router = useRouter();
   const [id, setId] = useState(null);
   const [page, setPage] = useState(1);
-  const [product, setProduct] = useState([]);
-  const getProduct = async () => {
-    try {
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/product?page=${page}`,
-        {
-          headers: {
-            "Cache-Control": "no-store",
-          },
-          cache: "no-store",
-        }
-      );
-      if (data?.success) {
-        setProduct(data);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-  useEffect(() => {
-    getProduct();
-  }, [page]);
+  const { data: product, isLoading } = useGetProductByPageQuery(page);
+  const [deleteProduct] = useDeleteProductMutation();
   const clickHandler = (id) => {
     setshow(true);
     setId(id);
   };
 
   const deleteHandler = async (id) => {
-    try {
-      const { data } = await axios.delete(
-        `http://localhost:8000/product/${id}`,
-        { withCredentials: true }
-      );
-      if (data?.success) {
-        toast.success(data?.message);
+    deleteProduct(id)
+      .unwrap()
+      .then((response) => {
+        toast.success(response?.message);
         setshow(false);
-        getProduct();
-        router.refresh();
-      } else {
-        toast.error(data?.message);
-      }
-    } catch (err) {
-      toast.error(err?.response?.data?.message);
-    }
+      })
+      .catch((error) => console.error(error));
   };
-  const pageHandler = (pageNumber) => {
-    setPage(pageNumber);
-  };
+
   const productIndex = page * 10 - 10 + 1;
+  console.log(product);
+  if (isLoading) return <div>Loading...</div>;
   return (
     <ProductBody>
       <div className="container mx-auto p-4 h-[calc(100vh-150px)] overflow-y-auto">
@@ -117,7 +89,7 @@ const Page = () => {
                         </button>
                       </Link>
                       <button
-                        className="bg-red-500 hover:bg-red-700 text-white font-bold p-4 rounded-full"
+                        className={`bg-red-500 hover:bg-red-700 text-white font-bold p-4 rounded-full`}
                         onClick={() => clickHandler(item._id)}
                       >
                         <FaTrashAlt />
@@ -163,7 +135,7 @@ const Page = () => {
           itemsCountPerPage={10}
           pageRangeDisplayed={5}
           totalItemsCount={product?.total}
-          onChange={pageHandler}
+          onChange={(pageNumber) => setPage(pageNumber)}
           firstPageText={<HiOutlineChevronDoubleLeft />}
           lastPageText={<HiOutlineChevronDoubleRight />}
           prevPageText={<FcPrevious />}

@@ -1,8 +1,12 @@
 "use client";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
+
+import {
+  useGetAllOrdersQuery,
+  useUpdateOrderMutation,
+  useDeleteOrderMutation,
+} from "@redux/slices/api";
 import { convertTime } from "@utils/convertTime";
+import { useEffect, useState } from "react";
 import Pagination from "react-js-pagination";
 import {
   HiOutlineChevronDoubleLeft,
@@ -11,202 +15,179 @@ import {
   FcNext,
 } from "@utils/iconExport";
 import { useRouter } from "next/navigation";
-const page = () => {
-  const [orders, setOrders] = useState(null);
+import toast from "react-hot-toast";
+
+const Orders = () => {
+  const [sortBy, setSort] = useState("all");
+  const { data, isLoading, error } = useGetAllOrdersQuery();
+  const [updateOrderStatus] = useUpdateOrderMutation();
+  const [deleteOrder] = useDeleteOrderMutation();
+  const [product, setProduct] = useState(null);
   const [filteredProduct, setFilteredProduct] = useState(null);
-  const [orderStatus, setOrderStatus] = useState({});
-  const [sortBy, setSortBy] = useState("all");
   const [page, setPage] = useState(1);
+  
   const router = useRouter();
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const { data } = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/orders`,
-          { withCredentials: true }
-        );
-        if (data?.success) {
-          setOrders(data?.orderList);
-          setFilteredProduct(data?.orderList);
-        }
-      } catch (err) {
-        toast.error('something went wrong later try again later')
+    if (data) {
+      setProduct(structuredClone(data));
+    }
+  }, [data]);
+  useEffect(() => {
+    const filtration = (status) => {
+      if (status == "all") {
+        return product?.orderList;
+      } else {
+        return product?.orderList.filter((item) => item.orderStatus === status);
       }
     };
-    fetchOrders();
-  }, [orderStatus]);
-
-  const statusChangeHandler = async (event, id) => {
-    const { value } = event.target;
-
-    try {
-      const { data } = await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/order/update/${id}`,
-        { orderStatus: value },
-        { withCredentials: true }
-      );
-      if (data?.success) toast.success(data?.message);
-    } catch (err) {
-      console.log(err);
-    }
-    setOrderStatus({ id: id, value });
+    if (product) setFilteredProduct(filtration(sortBy));
+  }, [sortBy, product]);
+  const pageHandler = (pageNo) => {
+    setPage(pageNo);
   };
-
-  const changeHandler = (e) => {
-    setSortBy(e.target.value);
-    filterProducts(e.target.value);
+  const statusChangeHandler = (e, id) => {
+    updateOrderStatus({ id, orderStatus: { orderStatus: e.target.value } })
+      .unwrap()
+      .then((response) => {
+        toast.success(response?.message);
+      })
+      .catch((error) => {
+        toast.error(error);
+      });
   };
-  const filterProducts = (status) => {
-    switch (status) {
-      case "all":
-        setFilteredProduct(orders);
-        break;
-      case "processing":
-        setFilteredProduct(
-          orders?.filter((item) => item.orderStatus === "processing")
-        );
-        break;
-      case "shipping":
-        setFilteredProduct(
-          orders?.filter((item) => item.orderStatus === "shipping")
-        );
-        break;
-      case "delivered":
-        setFilteredProduct(
-          orders?.filter((item) => item.orderStatus === "delivered")
-        );
-        break;
-      default:
-        setFilteredProduct(orders);
-    }
+  const orderDeleteHandler = (id) => {
+    deleteOrder(id)
+      .unwrap()
+      .then((response) => toast.success(response?.message))
+      .catch((error) => console.log(error));
   };
-  const pageHandler = (pageNumber) => {
-    setPage(pageNumber);
-  };
-  const skip = Number(page) * 10 - 10;
-  const tableNumbering = Number(page) * 10 - 9;
-
-  const clickHandler = (id) => {
-    router.push(`/admin/orders/${id}`);
-  };
-  if (!filteredProduct) {
-    return (
-      <div className="flex justify-center w-full h--screen items-center">
-        <p className="text-lg font-semibold text-gray-800">Loading...</p>
-      </div>
-    );
-  }
+  const skip = page * 10 - 10;
 
   return (
-    <div className="w-full" style={{minHeight:'calc(100vh - 155px)'}}>
-      <div className="lg:m-4 m-2 flex justify-between items-center shadow-lg p-3">
-        <h3 className="text-[gray] font-semibold">List of Orders</h3>
-        <select
-          name="sortBy"
-          className=" px-4 py-2 mt-2 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
-          value={sortBy}
-          onChange={changeHandler}
-        >
-          <option className="text-gray-900" value="all">
-            all
-          </option>
-          <option className="text-gray-900" value="processing">
-            processing
-          </option>
-          <option className="text-gray-900" value="shipping">
-            shipping
-          </option>
-          <option className="text-gray-900" value="delivered">
-            delevered
-          </option>
-        </select>
+    <div className="flex flex-col gap-4">
+      <div className="flex p-2 shadow-sm drop-shadow-md justify-between">
+        <h4 className="text-gray-800 font-semibold">List of orders</h4>
+        <div className="flex gap-2">
+          <label>Sort By:</label>
+          <select
+            className="py-1 px-2 rounded-md "
+            onChange={(e) => setSort(e.target.value)}
+            value={sortBy}
+          >
+            <option value="all">All</option>
+            <option value="processing">Processing</option>
+            <option value="shipping">Shipping</option>
+            <option value="delivered">Delivered</option>
+          </select>
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full table-auto border border-gray-300">
+      <div className="align-middle inline-block min-w-full lg:max-h-[80vh] min-h-[80vh]  shadow overflow-x-auto bg-white shadow-dashboard px-8 pt-3 rounded-bl-lg rounded-br-lg">
+        <table className="min-w-full">
           <thead>
-            <tr className="border-b-2">
-              <th className="px-4 py-2">S.No</th>
-              <th className="px-4 py-2">Username</th>
-              <th className="px-4 text-left py-2">Email</th>
-              <th className="px-4 py-2">OrderId</th>
-              <th className="px-4 py-2">totalPrice</th>
-              <th className="px-4 py-2">OrderStatus</th>
-              <th className="px-4 py-2">CreatedAt</th>
+            <tr>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left leading-4 text-blue-500 tracking-wider">
+                S.No
+              </th>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-blue-500 tracking-wider">
+                Username
+              </th>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-blue-500 tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-blue-500 tracking-wider">
+                Order Id
+              </th>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-blue-500 tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-blue-500 tracking-wider">
+                Created At
+              </th>
+              <th className="px-6 py-3 border-b-2 border-gray-300"></th>
             </tr>
           </thead>
-          <tbody>
-            {filteredProduct
-              .reverse()
-              .slice(skip, page * 10)
-              .map((product, index) => {
-                return (
-                  <tr className="border-b" key={index}>
-                    <td className=" px-4 text-center py-2">
-                      {tableNumbering + index}
-                    </td>
-                    <td
-                      onClick={() => {
-                        clickHandler(product?._id);
-                      }}
-                      className=" px-4 flex justify-center py-2"
-                    >
-                      {product?.user?.name}
-                    </td>
-                    <td
-                      onClick={() => {
-                        clickHandler(product?._id);
-                      }}
-                      className="px-4 py-2"
-                    >
-                      {product?.user?.email}
-                    </td>
-                    <td className="px-4 text-center py-2">{product?._id}</td>
-                    <td
-                      onClick={() => {
-                        clickHandler(product?._id);
-                      }}
-                      className="px-4 text-center py-2"
-                    >
-                      {product?.totalPrice}
-                    </td>
-
-                    <td className="px-4 text-center py-2">
-                      {
-                        <select
-                          onChange={(e) => statusChangeHandler(e, product?._id)}
-                          name="orderStatus"
-                          className="py-1 px-2"
+          <tbody className="bg-white">
+            {filteredProduct &&
+              filteredProduct
+                .slice(skip, 10 * Number(page))
+                .map((item, index) => {
+                  return (
+                    <tr>
+                      <td
+                        onClick={() => router.push(`/admin/orders/${item._id}`)}
+                        className="px-6 py-4 whitespace-no-wrap border-b border-gray-500"
+                      >
+                        <div className="flex items-center">
+                          <div>
+                            <div className="text-sm leading-5 text-gray-800">
+                              {skip + 1 + index}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td
+                        onClick={() => router.push(`/admin/orders/${item._id}`)}
+                        className="px-6 py-4 whitespace-no-wrap border-b border-gray-500"
+                      >
+                        <div className="text-sm leading-5 text-blue-900">
+                          {item.user.name}
+                        </div>
+                      </td>
+                      <td
+                        onClick={() => router.push(`/admin/orders/${item._id}`)}
+                        className="px-6 py-4 whitespace-no-wrap border-b text-blue-900 border-gray-500 text-sm leading-5"
+                      >
+                        {item.user.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-no-wrap border-b text-blue-900 border-gray-500 text-sm leading-5">
+                        {item._id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-no-wrap border-b text-blue-900 border-gray-500 text-sm leading-5">
+                        <span className="relative inline-block px-3 py-1 font-semibold text-green-900 leading-tight">
+                          <select
+                            className="py-1 px-2"
+                            onChange={(e) => statusChangeHandler(e, item._id)}
+                          >
+                            <option
+                              value="processing"
+                              selected={item.orderStatus === "processing"}
+                            >
+                              Processing
+                            </option>
+                            <option
+                              value="shipping"
+                              selected={item.orderStatus === "shipping"}
+                            >
+                              Shipping
+                            </option>
+                            <option
+                              value="delivered"
+                              selected={item.orderStatus === "delivered"}
+                            >
+                              Delivered
+                            </option>
+                          </select>
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-no-wrap border-b border-gray-500 text-blue-900 text-sm leading-5">
+                        {convertTime(item.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-no-wrap text-right border-b border-gray-500 text-sm leading-5">
+                        <button
+                          onClick={() => orderDeleteHandler(item._id)}
+                          className="px-5 py-2 border-red-500 border text-red-500 rounded transition duration-300 hover:bg-red-700 hover:text-white focus:outline-none"
                         >
-                          <option
-                            value="processing"
-                            selected={product?.orderStatus === "processing"}
-                          >
-                            processing
-                          </option>
-                          <option
-                            value="shipping"
-                            selected={product?.orderStatus === "shipping"}
-                          >
-                            shipped
-                          </option>
-                          <option
-                            value="delivered"
-                            selected={product?.orderStatus === "delivered"}
-                          >
-                            delivered
-                          </option>
-                        </select>
-                      }
-                    </td>
-                    <td className="px-4 text-center py-2">
-                      {convertTime(product?.createdAt.toString())}
-                    </td>
-                  </tr>
-                );
-              })}
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
           </tbody>
         </table>
-        <div className="flex jusitfy-center w-48 mx-auto gap-2">
+      </div>
+      <div className="flex jusitfy-center w-48 mx-auto gap-2">
+        {filteredProduct && (
           <Pagination
             activePage={Number(page)}
             itemsCountPerPage={10}
@@ -222,10 +203,10 @@ const page = () => {
             itemClass="flex w-9 h-9 items-center border border-blue-300"
             linkClass="mx-auto"
           />
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default page;
+export default Orders;

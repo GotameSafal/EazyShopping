@@ -5,6 +5,7 @@ import quantitySlice from "./slices/quantitySlice";
 import userNav from "./slices/userNav";
 import adminNav from "./slices/adminNav";
 import paymentStatus from "./slices/khalti.js";
+import { api } from "./slices/api.js";
 export const store = configureStore({
   reducer: {
     configUser,
@@ -13,5 +14,8 @@ export const store = configureStore({
     adminNav,
     userNav,
     paymentStatus,
+    [api.reducerPath]: api.reducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(api.middleware),
 });

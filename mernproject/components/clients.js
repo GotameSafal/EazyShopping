@@ -27,17 +27,23 @@ import {
   removeNotification,
   setNotification,
 } from "@redux/slices/cartSlice";
-import axios from "axios";
 import Pagination from "react-js-pagination";
 import { caluculatePrice } from "@utils/calculatePrice";
 import { convertTime } from "@utils/convertTime";
-import { updateUserOnGlobalStore } from "@utils/getUser";
-import { setFilterPriceParams } from "@utils/dummy";
+import { generateMerchantId, setFilterPriceParams } from "@utils/dummy";
 import {
   openUserSidebar,
   closeUserSideBar,
   setUserScreen,
 } from "@redux/slices/userNav";
+import {
+  useAddAddressMutation,
+  useAddOrderMutation,
+  useDeleteAddressMutation,
+  useLazyGetMyInfoQuery,
+  useLazyLogoutQuery,
+  useMakePaymentMutation,
+} from "@redux/slices/api";
 
 export const SearchBar = ({ classname }) => {
   const router = useRouter();
@@ -76,6 +82,8 @@ export const SearchBar = ({ classname }) => {
 
 export const UserNavbar = () => {
   const router = useRouter();
+  const [logout] = useLazyLogoutQuery();
+  const [getMyInfo] = useLazyGetMyInfoQuery();
   const dispatch = useDispatch();
   const [profileToggle, setProfileToggle] = useState(false);
   const token = useSelector((state) => state.configUser.token);
@@ -86,20 +94,11 @@ export const UserNavbar = () => {
   let { screen } = useSelector((state) => state.userNav);
   useEffect(() => {
     if (token) {
-      (async () => {
-        try {
-          const { data } = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/me`,
-            {
-              withCredentials: true,
-            }
-          );
-          if (data?.success) {
-            dispatch(setUser(data?.user));
-          }
-        } catch (err) {
-          toast.error('something went wrong try again later')
-        }
+      (() => {
+        getMyInfo()
+          .unwrap()
+          .then((response) => dispatch(setUser(response?.user)))
+          .catch((error) => console.log(error));
       })();
     }
   }, [token]);
@@ -120,25 +119,16 @@ export const UserNavbar = () => {
     setProfileToggle((prev) => !prev);
   };
   const logoutHandler = async () => {
-    try {
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/logout`,
-        {
-          withCredentials: true,
-        }
-      );
-      if (data?.success) {
-        toast.success(data?.message);
+    logout()
+      .unwrap()
+      .then((response) => {
+        toast.success(response?.message);
         dispatch(setToken(null));
         dispatch(setUser(null));
         localStorage.removeItem("cart");
         router.push("/");
-      } else {
-        toast.error(data?.message);
-      }
-    } catch (err) {
-      toast.error('please try again later')
-    }
+      })
+      .catch((error) => console.error(error));
   };
   return (
     <div>
@@ -391,7 +381,8 @@ export const MainBody = ({ data }) => {
                     </div>
                   </div>
                   <p className="text-xl font-semibold">{`Rs ${
-                    product.price - (product.discount / 100) * product.price
+                    product.price -
+                    ((product.discount / 100) * product.price).toFixed(0)
                   }`}</p>
                   {product.discount > 0 ? (
                     <div className="flex gap-3 text-sm">
@@ -559,24 +550,15 @@ export const ConditionalNavbar = ({ cookie }) => {
   const path = usePathname();
   const dispatch = useDispatch();
   const token = useSelector((state) => state.configUser.token);
-  const cartItem = useSelector((state) => state.cartSection.cart);
+  const [getUser] = useLazyGetMyInfoQuery();
   useEffect(() => {
     if (token) {
-      (async () => {
-        try {
-          const { data } = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/me`,
-            {
-              withCredentials: true,
-            }
-          );
-          if (data?.success) {
-            dispatch(setUser(data?.user));
-          }
-        } catch (err) {
-          toast.error('something went wrong try again later')
-        }
-      })();
+      getUser()
+        .unwrap()
+        .then((response) => {
+          dispatch(setUser(response?.user));
+        })
+        .catch((error) => console.error(error));
     }
   }, [token]);
 
@@ -637,19 +619,34 @@ export const UserSidebar = () => {
         </div>
         <div className="">
           <ul>
-            <li className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800">
+            <li
+              onClick={clickHandler}
+              className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800"
+            >
               <Link href="/">Home</Link>
             </li>
-            <li className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800">
+            <li
+              onClick={clickHandler}
+              className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800"
+            >
               <Link href="/orders">Orders</Link>
             </li>
-            <li className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800">
+            <li
+              onClick={clickHandler}
+              className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800"
+            >
               <Link href="/cart">Cart</Link>
             </li>
-            <li className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800">
+            <li
+              onClick={clickHandler}
+              className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800"
+            >
               <Link href="/shipping">Shipping</Link>
             </li>
-            <li className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800">
+            <li
+              onClick={clickHandler}
+              className="py-1 px-3 hover:bg-gray-400 rounded-md font-semibold text-gray-800"
+            >
               <Link href="/shipping">Addresses</Link>
             </li>
             <li className="py-1 px-3  hover:bg-gray-400 rounded-md font-semibold text-gray-800">
@@ -666,21 +663,13 @@ export const UserSidebar = () => {
 };
 
 export const Addresses = () => {
-  const dispatch = useDispatch();
+  const [deleteAddress] = useDeleteAddressMutation();
   const user = useSelector((state) => state.configUser.user);
   const deleteHandler = async (addressId) => {
-    try {
-      const { data } = await axios.delete(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/me/address/${addressId}`,
-        { withCredentials: true }
-      );
-      if (data?.success) {
-        toast.success(data?.message);
-        await updateUserOnGlobalStore(dispatch);
-      }
-    } catch (error) {
-      toast.error("Something went wrong");
-    }
+    deleteAddress(addressId)
+      .unwrap()
+      .then((response) => toast.success(response?.message))
+      .catch((error) => console.error(error));
   };
   return (
     <div className="shadow-md drop-shadow-md rounded-md p-3 my-3">
@@ -690,7 +679,10 @@ export const Addresses = () => {
       </div>
       {user?.address?.map((address, ind) => {
         return (
-          <div className="bg-[#f6f6f6] mb-2 p-2 rounded-sm flex  gap-4">
+          <div
+            key={ind}
+            className="bg-[#f6f6f6] mb-2 p-2 rounded-sm flex  gap-4"
+          >
             <input
               type="radio"
               className="w-4 h-4 "
@@ -726,7 +718,6 @@ export const Addresses = () => {
 };
 
 export const SetAddress = () => {
-  const dispatch = useDispatch();
   const initialState = {
     username: "",
     email: "",
@@ -737,27 +728,20 @@ export const SetAddress = () => {
     zipPostalCode: "",
   };
   const [addressData, setAddressData] = useState(initialState);
-
+  const [addAddress, { isLoading }] = useAddAddressMutation();
   const changeHandler = (e) => {
     const { name, value } = e.target;
     setAddressData((prev) => ({ ...prev, [name]: value }));
   };
   const submitHandler = async (e) => {
     e.preventDefault();
-    try {
-      const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/me/address`,
-        addressData,
-        { withCredentials: true }
-      );
-      if (data?.success) {
-        toast.success(data?.message);
-        await updateUserOnGlobalStore(dispatch);
+    addAddress(addressData)
+      .unwrap()
+      .then((response) => {
+        toast.success(response?.message);
         setAddressData(initialState);
-      }
-    } catch (err) {
-      toast.error(err?.response?.data?.message);
-    }
+      })
+      .catch((error) => toast.error("something went wrong"));
   };
 
   return (
@@ -771,7 +755,7 @@ export const SetAddress = () => {
         </div>
         <form className="flex flex-col gap-3" onSubmit={submitHandler}>
           <div>
-            <label for="username">Full name</label>
+            <label htmlFor="username">Full name</label>
             <input
               type="text"
               placeholder="example example"
@@ -783,7 +767,7 @@ export const SetAddress = () => {
             />
           </div>
           <div>
-            <label for="email">Email address</label>
+            <label htmlFor="email">Email address</label>
             <input
               type="email"
               placeholder="example@gmail.com"
@@ -795,7 +779,7 @@ export const SetAddress = () => {
             />
           </div>
           <div>
-            <label for="phoneNo">Phone No</label>
+            <label htmlFor="phoneNo">Phone No</label>
             <input
               type="tel"
               placeholder="9238729834"
@@ -807,7 +791,7 @@ export const SetAddress = () => {
             />
           </div>
           <div>
-            <label for="city">City</label>
+            <label htmlFor="city">City</label>
             <input
               type="text"
               placeholder="Kathmandu"
@@ -819,7 +803,7 @@ export const SetAddress = () => {
             />
           </div>
           <div>
-            <label for="town">Address</label>
+            <label htmlFor="town">Address</label>
             <input
               type="text"
               placeholder="Bouddha"
@@ -832,7 +816,7 @@ export const SetAddress = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="w-full">
-              <label for="province">Province</label>
+              <label htmlFor="province">Province</label>
               <input
                 type="text"
                 placeholder="Bagmati"
@@ -844,7 +828,7 @@ export const SetAddress = () => {
               />
             </div>
             <div className="w-full">
-              <label for="zipPostalCode">Zip/Postal code</label>
+              <label htmlFor="zipPostalCode">Zip/Postal code</label>
               <input
                 type="text"
                 placeholder="982347"
@@ -857,8 +841,11 @@ export const SetAddress = () => {
             </div>
           </div>
           <button
+            disable={isLoading}
             type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+            className={`${
+              isLoading ? "cursor-not-allowed" : "cursor-pointer"
+            } bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full`}
           >
             Add shipping
           </button>
@@ -909,10 +896,13 @@ export const Cpagination = ({ total }) => {
 
 export const ShippingConfirm = ({ paymentMethod, address }) => {
   const dispatch = useDispatch();
+  const [addOrder, { isLoading }] = useAddOrderMutation();
+  const [makeKhaltiPayment] = useMakePaymentMutation();
   const cart = useSelector((state) => state.cartSection);
   const user = useSelector((state) => state.configUser.user);
   const { costWithVat, shipping, total, vat } = caluculatePrice(cart);
   const [show, setShow] = useState(false);
+
   const orderHandler = async (totalcost) => {
     if (!address || !paymentMethod)
       toast.error("please select location and payment method");
@@ -924,8 +914,8 @@ export const ShippingConfirm = ({ paymentMethod, address }) => {
       const payload = {
         return_url: process.env.NEXT_PUBLIC_KHALTI_SUCCESS,
         website_url: process.env.NEXT_PUBLIC_WEB_URL,
-        amount: 1300,
-        purchase_order_id: user?._id,
+        amount: totalcost * 1000,
+        purchase_order_id: generateMerchantId,
         purchase_order_name: "products",
         customer_info: {
           name: user.name,
@@ -933,36 +923,30 @@ export const ShippingConfirm = ({ paymentMethod, address }) => {
           phone: address?.phoneNo,
         },
       };
-      const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/khalti-pay`,
-        payload,
-        { withCredentials: true }
-      );
-      localStorage.setItem(
-        "confirmedProduct",
-        JSON.stringify(finalOrderinProductsDetail)
-      );
-      if (data) {
-        window.location.href = data?.data?.payment_url;
-      }
-    } else {
-      toast.error("please select payment method");
+      console.log(payload);
+      makeKhaltiPayment(payload)
+        .unwrap()
+        .then((response) => {
+          localStorage.setItem(
+            "confirmedProduct",
+            JSON.stringify(finalOrderinProductsDetail)
+          );
+          window.location.href = response.data?.payment_url;
+        })
+        .catch((error) => console.error(error));
     }
   };
   const confirmHandler = async () => {
-    try {
-      const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/order/new`,
-        finalOrderinProductsDetail,
-        { withCredentials: true }
-      );
-      if (data?.success) {
-        toast.success(data?.message);
-        reassignToCart(cart.cart?.filter((item) => item.quantity === 0));
-      }
-    } catch (error) {
-      toast.error('try again later')
-    }
+    console.log(finalOrderinProductsDetail);
+    addOrder(finalOrderinProductsDetail)
+      .unwrap()
+      .then((response) => {
+        toast.success(response.message);
+        dispatch(
+          reassignToCart(cart.cart?.filter((item) => item.quantity === 0))
+        );
+      })
+      .catch((error) => console.error(error));
     setShow(false);
   };
   const finalOrderinProductsDetail = {
@@ -980,7 +964,6 @@ export const ShippingConfirm = ({ paymentMethod, address }) => {
     },
     orderStatus: "processing",
   };
-
   return (
     <>
       <div className="drop-shadow-md rounded-md w-full py-2 px-3 flex flex-col shadow-md">
@@ -1003,8 +986,11 @@ export const ShippingConfirm = ({ paymentMethod, address }) => {
         <hr className="my-1" />
         <div className="mt-1 flex flex-col gap-1">
           <button
+            disabled={isLoading}
             onClick={() => orderHandler(costWithVat)}
-            className="text-sm w-36 bg-blue-500 py-1 px-2 text-white cursor-pointer rounded-md"
+            className={`${
+              isLoading ? "cursor-not-allowed" : "cursor-pointer"
+            } text-sm w-36 bg-blue-500 py-1 px-2 text-white cursor-pointer rounded-md`}
           >
             Order
           </button>
@@ -1083,8 +1069,8 @@ export const ListofOrderedProduct = ({ orderData }) => {
                         <Image
                           width={70}
                           height={70}
-                          src={product.image.url}
-                          alt={product.img}
+                          src={product.images}
+                          alt={product.images}
                         />
                         <p>
                           <Link href={`/product/${product._id}`}>
@@ -1111,7 +1097,7 @@ export const BreadCrumbs = ({ Crumb }) => {
       <ol className="inline-flex items-center space-x-1 md:space-x-3">
         {Crumb?.map((crumb, ind) => {
           return (
-            <li className="py-3">
+            <li key={ind} className="py-3">
               <div className="flex items-center">
                 {ind !== 0 && (
                   <AiOutlineRight className="w-4 h-4 text-gray-700 font-semibold" />

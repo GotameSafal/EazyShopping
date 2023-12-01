@@ -54,8 +54,9 @@ const OrderSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
-      image: {
-        url: { type: String, required: true },
+      images: {
+        type: String,
+        required: true,
       },
       product: {
         type: mongoose.Schema.ObjectId,

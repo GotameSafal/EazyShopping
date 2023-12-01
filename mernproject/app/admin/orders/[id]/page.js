@@ -4,37 +4,45 @@ import { useEffect, useState } from "react";
 import { convertTime } from "@utils/convertTime";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useGetUserSingleOrderQuery } from "@redux/slices/api";
 const page = ({ params }) => {
-  const [orderedProduct, setOrderedProduct] = useState("");
-  const [fetchError, setFetchError] = useState("");
+  // const [orderedProduct, setOrderedProduct] = useState("");
+  // const [fetchError, setFetchError] = useState("");
+  const { data, isLoading, isError } = useGetUserSingleOrderQuery(params.id);
   const router = useRouter();
 
-  useEffect(() => {
-    const getOrderedProduct = async () => {
-      try {
-        const { data } = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/order/${params.id}`,
-          {
-            withCredentials: true,
-          }
-        );
-        
-        setOrderedProduct(data.order);
-      } catch (error) {
-        setFetchError("Something went wrong please try again");
-      }
-    };
-    getOrderedProduct();
-  }, []);
-  if (fetchError) {
+  // useEffect(() => {
+  //   const getOrderedProduct = async () => {
+  //     try {
+  //       const { data } = await axios.get(
+  //         `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/order/${params.id}`,
+  //         {
+  //           withCredentials: true,
+  //         }
+  //       );
+
+  //       setOrderedProduct(data.order);
+  //     } catch (error) {
+  //       setFetchError("Something went wrong please try again");
+  //     }
+  //   };
+  //   getOrderedProduct();
+  // }, []);
+  if (isLoading) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
-        {fetchError}
+        Loading...
       </div>
     );
   }
-  let orderedTime;
-  orderedProduct && (orderedTime = convertTime(orderedProduct?.createdAt));
+  if (isError) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        Something went wrong try again later
+      </div>
+    );
+  }
+  const orderedTime = convertTime(data?.order?.createdAt);
   let tableHeadClassStyle =
     "bg-blueGray-50 text-blueGray-500 border-blueGray-100 whitespace-nowrap border border-l-0 border-r-0 border-solid px-6 py-3 text-left align-middle text-xs font-semibold uppercase";
   return (
@@ -48,14 +56,14 @@ const page = ({ params }) => {
           <p className="flex items-center gap-2">
             Status :
             <span className="py-1 px-3 border rounded-md ">
-              {orderedProduct?.orderStatus}
+              {data?.order?.orderStatus}
             </span>
           </p>
         </div>
         <div className="ps-4 text-sm">
           <p>{params.id}</p>
-          <p>{orderedProduct?.user?.name}</p>
-          <p>{orderedProduct?.user?.email}</p>
+          <p>{data?.order?.user?.name}</p>
+          <p>{data?.order?.user?.email}</p>
           <p>{orderedTime}</p>
         </div>
       </div>
@@ -75,7 +83,7 @@ const page = ({ params }) => {
               </tr>
             </thead>
             <tbody>
-              {orderedProduct?.orderItems?.map((product, index) => {
+              {data?.order?.orderItems?.map((product, index) => {
                 return (
                   <tr key={index} className="py-1 border-b-2 border-gray-700">
                     <th class="text-blueGray-700 whitespace-nowrap border-l-0 border-r-0 border-t-0 py-1 px-6 text-left align-middle">
@@ -89,7 +97,7 @@ const page = ({ params }) => {
                     </td>
                     <td class="whitespace-nowrap border-l-0 border-r-0 border-t-0 py-1 px-6 align-middle">
                       <Image
-                        src={product?.image.url}
+                        src={product?.images}
                         alt="image.webp"
                         width={45}
                         height={50}
@@ -110,7 +118,7 @@ const page = ({ params }) => {
                 >
                   Total:
                 </th>
-                <td className="px-6 py-3">{`Rs ${orderedProduct?.totalPrice}`}</td>
+                <td className="px-6 py-3">{`Rs ${data?.order?.totalPrice}`}</td>
               </tr>
             </tfoot>
           </table>

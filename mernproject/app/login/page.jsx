@@ -3,40 +3,30 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setToken } from "@redux/slices/configUser";
-
+import { useLoginMutation } from "@redux/slices/api";
 const LoginPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  let [value, setValue] = useState({
+  const [login, { isLoading }] = useLoginMutation();
+  const [value, setValue] = useState({
     email: "",
     password: "",
   });
 
   const loginHandler = async (e) => {
     e.preventDefault();
-    try {
-      const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/login`,
-        value,
-        {
-          withCredentials: true,
-        }
-      );
-      if (data.success) {
-        toast.success(data?.message);
-        dispatch(setToken(data?.token));
+    login(value)
+      .unwrap()
+      .then((response) => {
+        toast.success(response?.message);
+        dispatch(setToken(response?.token));
         router.push("/");
-      } else {
-        toast.error("Something went wrong");
-      }
-    } catch (err) {
-      toast.error(err.response.data.message);
-    }
+      })
+      .catch((error) => toast.error(error?.data?.message));
   };
-  const changeHandler = (e) => {
+  const inputHandler = (e) => {
     setValue((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
   return (
@@ -50,7 +40,7 @@ const LoginPage = () => {
               type="email"
               name="email"
               placeholder=""
-              onChange={changeHandler}
+              onInput={inputHandler}
               value={value.email}
               required
             />
@@ -62,7 +52,7 @@ const LoginPage = () => {
               type="password"
               placeholder=""
               value={value.password}
-              onChange={changeHandler}
+              onInput={inputHandler}
               name="password"
               required
             />
@@ -81,7 +71,10 @@ const LoginPage = () => {
             </Link>
           </div>
           <button
-            className="bg-blue-400 py-2 rounded-md"
+            disabled={isLoading}
+            className={`bg-blue-400 py-2 rounded-md ${
+              isLoading ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
             type="submit"
           >
             Submit

@@ -1,9 +1,9 @@
 "use client";
 import { useRef, useState } from "react";
 import { categories } from "@utils/categories";
-import axios from "axios";
 import styles from "@styles/adminProduct.module.scss";
 import { toast } from "react-hot-toast";
+import { useAddProductMutation } from "@redux/slices/api";
 function AddProductPage() {
   const fileRef = useRef();
   const productObj = {
@@ -19,7 +19,7 @@ function AddProductPage() {
     sizes: [],
   };
   const [product, setProduct] = useState(productObj);
-
+  const [addProduct, { isLoading }] = useAddProductMutation();
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProduct((prevState) => ({ ...prevState, [name]: value }));
@@ -83,19 +83,14 @@ function AddProductPage() {
     product?.image.map((file) => {
       formData.append("file", file);
     });
-    try {
-      const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/new`,
-        formData,
-        { withCredentials: true }
-      );
-      if (data?.success) {
-        toast.success(data?.message);
+    addProduct(formData)
+      .unwrap()
+      .then((response) => {
+        console.log(response);
+        toast.success(response?.message);
         formReset();
-      } else toast.error(data?.message);
-    } catch (err) {
-      toast.error(err?.response?.data?.message);
-    }
+      })
+      .catch((error) => console.error(error));
   };
 
   return (
@@ -309,8 +304,11 @@ function AddProductPage() {
 
         <div className="flex gap-2">
           <button
+            disabled={isLoading}
             type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+            className={`${
+              isLoading ? "cursor-progress" : "cursor-pointer"
+            } bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md`}
           >
             Add
           </button>
