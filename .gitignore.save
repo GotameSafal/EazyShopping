@@ -1,0 +1,34 @@
+# Ignoring dependencies
+/backend/node_modules
+/.pnp
+.pnp.js
+/backend/config/*.env
+/backend/config/node_modules
+# Ignoring testing coverage
+*/coverage
+
+# Ignoring Next.js build and output directories
+/mernproject/.next/
+/mernproject/out/
+
+# Ignoring production build
+/frontend/build
+
+# Ignoring miscellaneous files
+.DS_Store
+*.pem
+
+# Ignoring debug logs
+npm-debug.lrepositoryog*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignoring local environment files
+.env*.local
+
+# Ignoring Vercel deployment files
+.vercel
+
+# Ignoring TypeScript build information and Next.js environment declaration
+*.tsbuildinfo
+next-env.d.ts

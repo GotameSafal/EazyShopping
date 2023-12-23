@@ -15,7 +15,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   const cookieStore = cookies();
-  const cookieValue = cookieStore.get("Ecommerce");
+  const cookieValue = cookieStore.get("EazyShopping");
   return (
     <html lang="en">
       <body className={roboto.className}>

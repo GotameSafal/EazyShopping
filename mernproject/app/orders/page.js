@@ -12,7 +12,7 @@ const Order = () => {
       </div>
     );
   }
-  if (orderedProduct.order.length === 0) {
+  if (orderedProduct?.order.length === 0) {
     return (
       <div className="h-screen text-2xl font-bold w-screen flex justify-center items-center">
         No any product

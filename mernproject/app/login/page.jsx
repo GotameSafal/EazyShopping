@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setToken } from "@redux/slices/configUser";
 import { useLoginMutation } from "@redux/slices/api";
+import Cookies from "js-cookie";
 const LoginPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -19,9 +20,10 @@ const LoginPage = () => {
     e.preventDefault();
     login(value)
       .unwrap()
-      .then((response) => {
-        toast.success(response?.message);
-        dispatch(setToken(response?.token));
+      .then((res) => {
+        toast.success(res?.message);
+        Cookies.set("EazyShopping", res?.token, { expires: 7 });
+        dispatch(setToken(res?.token));
         router.push("/");
       })
       .catch((error) => toast.error(error?.data?.message));

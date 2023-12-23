@@ -11,7 +11,7 @@ const configUser = createSlice({
       return { ...state, user: action.payload };
     },
     setToken(state, action) {
-      const user = { ...action.payload };
+      
       return { ...state, token: action.payload };
     },
   },

@@ -3,7 +3,11 @@ export const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
     baseUrl: `${process.env.NEXT_PUBLIC_BACKEND_URL}`,
-    credentials: "include",
+    prepareHeaders: (headers, { getState }) => {
+      let token = getState().configUser.token;
+      if (token) headers.set("authorization", `Bearer ${token}`);
+      return headers;
+    },
   }),
   tagTypes: ["User", "Product", "Order"],
   endpoints: (builder) => ({

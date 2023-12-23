@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 export async function middleware(req) {
   const path = req.nextUrl.pathname;
   const publicPath = path === "/login" || path === "/signin";
-  const token = req.cookies.get("Ecommerce")?.value || "";
+  const token = req.cookies.get("EazyShopping")?.value || "";
 
   if (publicPath && token) {
     return NextResponse.redirect(new URL("/", req.url));
@@ -15,7 +15,7 @@ export async function middleware(req) {
       const data = await (
         await fetch(`${process.env.BACKEND_URL}/me`, {
           headers: {
-            Cookie: `Ecommerce=${token}`,
+            authorization: `Bearer ${token}`,
           },
         })
       ).json();

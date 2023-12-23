@@ -6,7 +6,7 @@ export const sendToken = async (user, res, message, statusCode) => {
     ),
     httpOnly: true,
   };
-  res.status(statusCode).cookie("Ecommerce", token, options).json({
+  res.status(statusCode).json({
     success: true,
     message: message,
     token,

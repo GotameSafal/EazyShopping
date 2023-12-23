@@ -43,10 +43,7 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
 
 // logout user
 export const logoutUser = catchAsyncError(async (req, res, next) => {
-  res.cookie("Ecommerce", null, {
-    expires: new Date(Date.now()),
-    httpOnly: true,
-  });
+
   res.status(200).json({
     success: true,
     message: "successfully logged out",

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import {
   AiOutlineSearch,
@@ -44,7 +45,8 @@ import {
   useLazyLogoutQuery,
   useMakePaymentMutation,
 } from "@redux/slices/api";
-
+import { IoIosStar } from "react-icons/io";
+import { FaRegStar } from "react-icons/fa";
 export const SearchBar = ({ classname }) => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
@@ -121,10 +123,11 @@ export const UserNavbar = () => {
   const logoutHandler = async () => {
     logout()
       .unwrap()
-      .then((response) => {
-        toast.success(response?.message);
+      .then((res) => {
+        toast.success(res?.message);
         dispatch(setToken(null));
         dispatch(setUser(null));
+        Cookies.remove("EazyShopping");
         localStorage.removeItem("cart");
         router.push("/");
       })
@@ -138,7 +141,7 @@ export const UserNavbar = () => {
             toShow ? "block" : "hidden"
           } h-[60px] border-b-2 mx-auto flex items-center justify-center`}
         >
-          <SearchBar class="" />
+          <SearchBar classname="" />
         </div>
       )}
       <div className="lg:w-[80%] sm:px-0 px-1 h-[60px] border-b-2 mx-auto flex items-center justify-between">
@@ -194,11 +197,17 @@ export const UserNavbar = () => {
                       profileToggle ? "block" : "hidden"
                     } w-20 absolute top-full  left-0 bg-red-500 z-10`}
                   >
-                    <div className="profile_container flex flex-col gap-1 p-2 bg-[#f6f6f6] bg-red shadow-sm drop-shadow-md rounded-sm">
-                      Profile
+                    <div className="profile_container cursor-pointer flex flex-col gap-1 p-2 bg-[#f6f6f6] bg-red shadow-sm drop-shadow-md rounded-sm">
+                      <p className="cursor-pointer">Profile</p>
+                      <p
+                        className="cursor-pointer"
+                        onClick={() => router.push("/orders")}
+                      >
+                        Orders
+                      </p>
                       <button
                         onClick={logoutHandler}
-                        className="w-16 rounded-md text-sm py-1 px-2 border-2 cursor-pointer border-slate-400"
+                        className="w-16 rounded-md  text-sm py-1 px-2 border-2 cursor-pointer border-slate-400"
                       >
                         Logout
                       </button>
@@ -269,6 +278,18 @@ export const FilterSection = ({ classname }) => {
     }
   };
 
+  const ratingHandler = (num) => {
+    if (typeof window !== "undefined") {
+      let searchQuery = new URLSearchParams(window.location.search);
+      if (searchQuery.has("ratings")) {
+        searchQuery.set("ratings", num);
+      } else {
+        searchQuery.append("ratings", num);
+      }
+      const path = `${window.location.pathname}?${searchQuery.toString()}`;
+      pathname !== "/" ? router.push(`/${path}`) : router.push(path);
+    }
+  };
   return (
     <div className={`w-[260px] flex flex-col gap-1 ${classname}`}>
       <div className="flex p-2 flex-col gap-1 rounded-md  border-2 border-slate-200">
@@ -321,19 +342,57 @@ export const FilterSection = ({ classname }) => {
       </div>
       <div className="flex p-2 flex-col gap-y-1 rounded-md border-2 border-slate-200 ">
         <h3 className=" font-semibold py-1">Ratings</h3>
-        <div className="flex flex-col text-sm gap-1 py-1">
-          {arr.map((elem) => (
-            <div key={elem} className="flex gap-1">
-              {arr.map((e, i) => (
-                <span key={i}>
-                  <AiFillStar
-                    className="text-yellow-300 cursor-pointer"
-                    size={20}
-                  />
-                </span>
-              ))}
-            </div>
-          ))}
+        <div className="flex flex-col text-sm gap-2 py-1">
+          <div
+            onClick={() => ratingHandler("1")}
+            className="flex gap-2 cursor-pointer"
+          >
+            <IoIosStar size={20} className="text-yellow-300" />
+            <FaRegStar size={20} className="text-gray-400" />
+            <FaRegStar size={20} className="text-gray-400" />
+            <FaRegStar size={20} className="text-gray-400" />
+            <FaRegStar size={20} className="text-gray-400" />
+          </div>
+          <div
+            onClick={() => ratingHandler("2")}
+            className="flex gap-2 cursor-pointer"
+          >
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <FaRegStar size={20} className="text-gray-400" />
+            <FaRegStar size={20} className="text-gray-400" />
+            <FaRegStar size={20} className="text-gray-400" />
+          </div>
+          <div
+            onClick={() => ratingHandler("3")}
+            className="flex gap-2 cursor-pointer"
+          >
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <FaRegStar size={20} className="text-gray-400" />
+            <FaRegStar size={20} className="text-gray-400" />
+          </div>
+          <div
+            onClick={() => ratingHandler("4")}
+            className="flex gap-2 cursor-pointer"
+          >
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <FaRegStar size={20} className="text-gray-400" />
+          </div>
+          <div
+            onClick={() => ratingHandler("5")}
+            className="flex gap-2 cursor-pointer"
+          >
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+            <IoIosStar size={20} className="text-yellow-300" />
+          </div>
         </div>
       </div>
     </div>
@@ -353,50 +412,56 @@ export const MainBody = ({ data }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="w-full h-auto flex gap-y-3 gap-x-1 sm:justify-start justify-center flex-wrap">
-        {data.product.map((product) => {
-          return (
-            <Link key={product._id} href={`/product/${product._id}`} passHref>
-              <div className="sm:w-[189px] sm:p-0 p-2 sm:h-[292px] h-[375px] w-[320px] bg-[#f6f6f6] hover:-translate-y-2 duration-300 ease-in-out transition-transform cursor-pointer rounded-md">
-                <div>
-                  <Image
-                    src={product?.images[0]?.url || "/noImage.jpg"}
-                    className="rounded-t-md mx-auto sm:w-[189px] sm:h-[189px] w-64 h-64"
-                    alt={product?.images[0]?.url}
-                  />
-                </div>
-                <div className="p-1">
-                  <div className="border-b-2 border-gray-200 py-1">
-                    <h2 className="font-semibold text-sm">
-                      {`${product.name.slice(0, 18)}...`}
-                    </h2>
-                    <div className="flex gap-1 text-yellow-400">
-                      <div className="flex gap-1">
-                        {arr.map((e, ind) => (
-                          <span key={ind} className="">
-                            <AiFillStar size={15} />
-                          </span>
-                        ))}
-                      </div>
-                      <span className="text-xs">{`(${product.no_of_reviews})`}</span>
-                    </div>
+        {data?.filteredProductCount > 0 ? (
+          data.product.map((product) => {
+            return (
+              <Link key={product._id} href={`/product/${product._id}`} passHref>
+                <div className="sm:w-[189px] sm:p-0 p-2 sm:h-[292px] h-[375px] w-[320px] bg-[#f6f6f6] hover:-translate-y-2 duration-300 ease-in-out transition-transform cursor-pointer rounded-md">
+                  <div>
+                    <img
+                      src={product?.images[0]?.url || "/noImage.jpg"}
+                      className="rounded-t-md mx-auto sm:w-[189px] sm:h-[189px] w-64 h-64"
+                      alt={product?.images[0]?.url}
+                    />
                   </div>
-                  <p className="text-xl font-semibold">{`Rs ${
-                    product.price -
-                    ((product.discount / 100) * product.price).toFixed(0)
-                  }`}</p>
-                  {product.discount > 0 ? (
-                    <div className="flex gap-3 text-sm">
-                      <span className="line-through">{`Rs ${product.price}`}</span>
-                      <span className="text-red-500">{`${product.discount}% off`}</span>
+                  <div className="p-1">
+                    <div className="border-b-2 border-gray-200 py-1">
+                      <h2 className="font-semibold text-sm">
+                        {`${product.name.slice(0, 18)}...`}
+                      </h2>
+                      <div className="flex gap-1 text-yellow-400">
+                        <div className="flex gap-1">
+                          {arr.map((e, ind) => (
+                            <span key={ind} className="">
+                              <AiFillStar size={15} />
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-xs">{`(${product.no_of_reviews})`}</span>
+                      </div>
                     </div>
-                  ) : (
-                    ""
-                  )}
+                    <p className="text-xl font-semibold">{`Rs ${
+                      product.price -
+                      ((product.discount / 100) * product.price).toFixed(0)
+                    }`}</p>
+                    {product.discount > 0 ? (
+                      <div className="flex gap-3 text-sm">
+                        <span className="line-through">{`Rs ${product.price}`}</span>
+                        <span className="text-red-500">{`${product.discount}% off`}</span>
+                      </div>
+                    ) : (
+                      ""
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })
+        ) : (
+          <div className="w-full h-full text-lg font-semibold flex items-center justify-center">
+            No products found
+          </div>
+        )}
       </div>
 
       <Cpagination total={total} />
@@ -551,7 +616,14 @@ export const ConditionalNavbar = ({ cookie }) => {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.configUser.token);
   const [getUser] = useLazyGetMyInfoQuery();
+
   useEffect(() => {
+    // Update the token if the cookie is provided
+    if (cookie) {
+      dispatch(setToken(cookie.value));
+    }
+
+    // Fetch user information when the token changes
     if (token) {
       getUser()
         .unwrap()
@@ -560,11 +632,7 @@ export const ConditionalNavbar = ({ cookie }) => {
         })
         .catch((error) => console.error(error));
     }
-  }, [token]);
-
-  if (cookie) {
-    dispatch(setToken(cookie.value));
-  }
+  }, [token, dispatch, cookie, getUser]);
 
   return path.startsWith("/admin") ? (
     ""
@@ -923,7 +991,6 @@ export const ShippingConfirm = ({ paymentMethod, address }) => {
           phone: address?.phoneNo,
         },
       };
-      console.log(payload);
       makeKhaltiPayment(payload)
         .unwrap()
         .then((response) => {
@@ -937,7 +1004,6 @@ export const ShippingConfirm = ({ paymentMethod, address }) => {
     }
   };
   const confirmHandler = async () => {
-    console.log(finalOrderinProductsDetail);
     addOrder(finalOrderinProductsDetail)
       .unwrap()
       .then((response) => {
@@ -1038,62 +1104,64 @@ export const ListofOrderedProduct = ({ orderData }) => {
       className="flex flex-col gap-3"
       style={{ minHeight: "calc(100vh - 160px)" }}
     >
-      {orderData?.reverse().map((item, ind) => {
-        return (
-          <div
-            key={ind}
-            className="bg-[#f6f6f6] p-4 shadow-md drop-shadow-md rounded-sm"
-          >
-            <div className="flex justify-between sm:flex-row flex-col">
-              <div className="flex flex-col">
-                <h2>
-                  Order <span className="text-blue-500">{`#${item._id}`}</span>
-                </h2>
-                <p>Placed on {convertTime(item.createdAt)}</p>
+      {orderData &&
+        orderData?.map((item, ind) => {
+          return (
+            <div
+              key={ind}
+              className="bg-[#f6f6f6] p-4 shadow-md drop-shadow-md rounded-sm"
+            >
+              <div className="flex justify-between sm:flex-row flex-col">
+                <div className="flex flex-col">
+                  <h2>
+                    Order{" "}
+                    <span className="text-blue-500">{`#${item._id}`}</span>
+                  </h2>
+                  <p>Placed on {convertTime(item.createdAt)}</p>
+                </div>
+                <div className="flex w-36 items-center gap-2">
+                  <span>status:</span>
+                  <span>{item.orderStatus}</span>
+                </div>
               </div>
-              <div className="flex w-36 items-center gap-2">
-                <span>status:</span>
-                <span>{item.orderStatus}</span>
-              </div>
-            </div>
-            <hr className="my-3" />
-            <ul className="flex flex-col gap-2">
-              {item.orderItems?.map((product, ind) => {
-                return (
-                  <li
-                    key={ind}
-                    className="grid gap-y-3 align-center grid-cols-2"
-                  >
-                    <div>
-                      <div className="w-full flex gap-2">
-                        <Image
-                          width={70}
-                          height={70}
-                          src={product.images}
-                          alt={product.images}
-                        />
-                        <p>
-                          <Link href={`/product/${product._id}`}>
-                            {product?.name.slice(0, 28).concat("...")}
-                          </Link>
-                        </p>
+              <hr className="my-3" />
+              <ul className="flex flex-col gap-2">
+                {item.orderItems?.map((product, ind) => {
+                  return (
+                    <li
+                      key={ind}
+                      className="grid gap-y-3 align-center grid-cols-2"
+                    >
+                      <div>
+                        <div className="w-full flex gap-2">
+                          <Image
+                            width={70}
+                            height={70}
+                            src={product.images}
+                            alt={product.images}
+                          />
+                          <p>
+                            <Link href={`/product/${product._id}`}>
+                              {product?.name.slice(0, 28).concat("...")}
+                            </Link>
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <span>{`Quantity: ${product?.quantity}`}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })}
+                      <span>{`Quantity: ${product?.quantity}`}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
     </div>
   );
 };
 
 export const BreadCrumbs = ({ Crumb }) => {
   return (
-    <div classMame="flex items-center h-14 py-3 rounded-lg">
+    <div className="flex items-center h-14 py-3 rounded-lg">
       <ol className="inline-flex items-center space-x-1 md:space-x-3">
         {Crumb?.map((crumb, ind) => {
           return (

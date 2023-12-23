@@ -1,34 +1,42 @@
-# Ignoring dependencies
-/node_modules
-/.pnp
-.pnp.js
-/backend/config/*.env
-/backend/config/node_modules
-# Ignoring testing coverage
-*/coverage
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Ignoring Next.js build and output directories
+# dependencies
+/mernproject/node_modules
+/mernproject/.pnp
+/mernproject/.pnp.js
+
+# testing
+/mernproject/coverage
+
+# next.js
 /mernproject/.next/
 /mernproject/out/
 
-# Ignoring production build
-/frontend/build
+# production
+/mernproject/build
 
-# Ignoring miscellaneous files
-.DS_Store
-*.pem
+# misc
+/mernproject/.DS_Store
+/mernproject/*.pem
 
-# Ignoring debug logs
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Ignoring local environment files
-.env*.local
+# local env files
+/mernproject/.env*.local
 
-# Ignoring Vercel deployment files
-.vercel
+# vercel
+/mernproject/.vercel
 
-# Ignoring TypeScript build information and Next.js environment declaration
-*.tsbuildinfo
-next-env.d.ts
+# typescript
+/mernproject/*.tsbuildinfo
+/mernproject/next-env.d.ts
+
+/backend/config/*.env
+/backend/node_modules
+backend/.env*.local
+backend/*.env
+/backend/config/*.env
+

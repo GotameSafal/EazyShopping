@@ -19,8 +19,14 @@ const Footer = () => {
         <div className="flex flex-col justify-center p-4">
           <h2 className="text-center pb-4 font-bold">Sponsors</h2>
           <div className="flex justify-center gap-6">
-            {sponsers.map((elem, ind) => elem.icon)}
+            {sponsers.map((elem, ind) => (
+              <div key={ind}>
+                {elem.icon}
+                <p>{elem.name}</p>
+              </div>
+            ))}
           </div>
+          ;
         </div>
         <hr />
         <div className="py-4 gap-4 grid justify-items-center md:grid-cols-3">

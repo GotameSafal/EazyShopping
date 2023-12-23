@@ -8,6 +8,7 @@ export const getProducts = async (searchParams = "") => {
     category: searchParams.category,
     "price[gte]" : searchParams.min,
     "price[lte]" : searchParams.max,
+    'avg_rating[gte]': searchParams.ratings
   };
   let searchQuery = queryString.stringify(urlparams);
 
